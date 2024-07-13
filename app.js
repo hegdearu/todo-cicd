@@ -3,14 +3,13 @@ const express = require('express'),
     methodOverride = require('method-override'),
     sanitizer = require('sanitizer'),
     app = express(),
-    port = process.env.PORT || 8000;
+    port = 8000;
 
-// Set view engine to EJS
-app.set('view engine', 'ejs');
+app.use(bodyParser.urlencoded({
+    extended: false
+}));
 
-// Middleware
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(methodOverride((req, res) => {
+app.use(methodOverride(function (req, res) {
     if (req.body && typeof req.body === 'object' && '_method' in req.body) {
         let method = req.body._method;
         delete req.body._method;
@@ -20,59 +19,57 @@ app.use(methodOverride((req, res) => {
 
 let todolist = [];
 
-// Routes
-app.get('/todo', (req, res) => {
-    res.render('todo.ejs', {
-        todolist,
-        clickHandler: "func1();"
-    });
-});
-
-app.post('/todo/add/', (req, res) => {
-    let newTodo = sanitizer.escape(req.body.newtodo);
-    if (req.body.newtodo != '') {
-        todolist.push(newTodo);
-    }
-    res.redirect('/todo');
-});
-
-app.get('/todo/delete/:id', (req, res) => {
-    if (req.params.id != '') {
-        todolist.splice(req.params.id, 1);
-    }
-    res.redirect('/todo');
-});
-
-app.get('/todo/:id', (req, res) => {
-    let todoIdx = req.params.id;
-    let todo = todolist[todoIdx];
-    if (todo) {
-        res.render('edititem.ejs', {
-            todoIdx,
-            todo,
+app.get('/todo', function (req, res) {
+        res.render('todo.ejs', {
+            todolist,
             clickHandler: "func1();"
         });
-    } else {
+    })
+
+    .post('/todo/add/', function (req, res) {
+        let newTodo = sanitizer.escape(req.body.newtodo);
+        if (req.body.newtodo != '') {
+            todolist.push(newTodo);
+        }
         res.redirect('/todo');
-    }
-});
+    })
 
-app.put('/todo/edit/:id', (req, res) => {
-    let todoIdx = req.params.id;
-    let editTodo = sanitizer.escape(req.body.editTodo);
-    if (todoIdx != '' && editTodo != '') {
-        todolist[todoIdx] = editTodo;
-    }
-    res.redirect('/todo');
-});
+    .get('/todo/delete/:id', function (req, res) {
+        if (req.params.id != '') {
+            todolist.splice(req.params.id, 1);
+        }
+        res.redirect('/todo');
+    })
 
-app.use((req, res, next) => {
-    res.redirect('/todo');
-});
+    .get('/todo/:id', function (req, res) {
+        let todoIdx = req.params.id;
+        let todo = todolist[todoIdx];
+        if (todo) {
+            res.render('edititem.ejs', {
+                todoIdx,
+                todo,
+                clickHandler: "func1();"
+            });
+        } else {
+            res.redirect('/todo');
+        }
+    })
 
-// Start server
-app.listen(port, 'localhost', () => {
-    console.log(`Todolist running on http://localhost:${port}`);
+    .put('/todo/edit/:id', function (req, res) {
+        let todoIdx = req.params.id;
+        let editTodo = sanitizer.escape(req.body.editTodo);
+        if (todoIdx != '' && editTodo != '') {
+            todolist[todoIdx] = editTodo;
+        }
+        res.redirect('/todo');
+    })
+
+    .use(function (req, res, next) {
+        res.redirect('/todo');
+    });
+
+app.listen(port, '0.0.0.0', function () {
+    console.log(`Todolist running on http://0.0.0.0:${port}`);
 });
 
 module.exports = app;
